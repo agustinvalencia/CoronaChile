@@ -21,6 +21,7 @@ Una vez que el factor de crecimiento sea consistente menor que 1, el modelo expo
 
 ```{r}
 data <- read.csv2("corona_data.csv", sep = ",", header = TRUE)
+#data <- read.csv2("sweden.csv", sep = ",", header = TRUE)
 data$Day <- as.Date(data$Day)
 n <- nrow(data)
 data$x <- 1:n
