@@ -1,5 +1,6 @@
 ---
 title: "Corona Virus en Chile"
+author: "A. Valencia"
 output: html_document
 ---
 
@@ -7,6 +8,14 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 library(ggplot2)
 ```
+
+# Comentarios a priori
+
+Los modelos proyectados a continuación son considerados simplistas, y por tanto los resultados acá presente no poseen la seriedad ni rigurosidad necesaria para poder considerados argumentos de peso. Lo anterior no por falta de profesionalismo si no de recursos y tiempo. 
+
+Los resultados siguen un modelo exponencial que no toma en cuenta el período de tiempo en que los individuos son contagiosos y luego dejan de serlos. Es necesario también añadir la cantidad de recuperados y muertos en el modelo. 
+
+Una vez que el factor de crecimiento sea consistente menor que 1, el modelo exponencial dejará de ser una aproximación válida. 
 
 # Datos a la fecha
 
