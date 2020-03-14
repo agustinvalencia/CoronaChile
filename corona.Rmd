@@ -1,7 +1,5 @@
 ---
 title: "Corona Virus en Chile"
-author: "Agustín Valencia"
-date: \today
 output: html_document
 ---
 
@@ -52,7 +50,6 @@ ggplot() + ggtitle("Factor de crecimiento") +
 
 ```{r}
 model <- lm(formula = log(cum) ~ x , data=data)
-summary(model)
 
 test_data <- data.frame(
                 Day = seq(data$Day[1], by="day", length.out = (n+3)), 
@@ -67,6 +64,8 @@ p <-ggplot() + ggtitle(paste("Proyección")) +
     xlab("Fecha") + ylab("Casos acumulados") + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 p
+
+summary(model)
 ```
 
 
