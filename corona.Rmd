@@ -55,7 +55,7 @@ ggplot() + ggtitle("Factor de crecimiento") +
 ```
 
 
-# Proyección de a 3 días (modelo exponencial simple)
+# Proyección a 3 días (modelo exponencial simple)
 
 ```{r}
 model <- lm(formula = log(cum) ~ x , data=data)
