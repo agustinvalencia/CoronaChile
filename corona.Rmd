@@ -1,0 +1,96 @@
+---
+title: "Corona Virus en Chile"
+author: "Agustín Valencia"
+date: \today
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+```
+
+# Datos a la fecha
+
+```{r}
+data <- read.csv2("corona_data.csv", sep = ",", header = TRUE)
+data$Day <- as.Date(data$Day)
+n <- nrow(data)
+data$x <- 1:n
+data$cum <- cumsum(data$NewCases)
+latest <- data[n,1]
+p <-ggplot() + ggtitle(paste("Evolución de casos al", latest)) +
+    geom_line(aes(x=data$Day, y=data$cum)) + 
+    geom_point(aes(x=data$Day, y=data$cum)) +
+    xlab("Fecha") + ylab("Casos acumulados") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+p
+```
+
+# Análisis del punto de Inflexión del modelo logístico
+
+Cuando el factor de crecimiento sea consistentemente $<1$ podemos presumir que la curva logística habrá pasado su punto de inflexión y el modelo exponencial ha de actualizarse a uno que inculya factores de saturación.
+
+```{r, warning=FALSE}
+growth_ratio <- vector(length=(n-1))
+for( i in 2:n ) {
+  growth_ratio[i-1] <- data$cum[i] / data$cum[i-1]
+}
+# La primera muestra es espuria
+growth_ratio[1] <- NA
+ggplot() + ggtitle("Factor de crecimiento") + 
+  geom_point(aes(x=data$Day[2:n], y=growth_ratio, color="crecimiento")) + 
+  geom_line(aes(x=data$Day[2:n], y=growth_ratio, color="crecimiento")) + 
+  xlab("Fecha") + ylab("Growth rate") +
+  ylim(0,(max(growth_ratio)+0.5)) +
+  geom_hline(yintercept = 1, aes(color="y=1"))
+  
+```
+
+
+# Proyección de a 3 días (modelo exponencial simple)
+
+```{r}
+model <- lm(formula = log(cum) ~ x , data=data)
+summary(model)
+
+test_data <- data.frame(
+                Day = seq(data$Day[1], by="day", length.out = (n+3)), 
+                x = 1:(n+3)
+              )
+
+test_data$preds <- exp(predict(model, newdata=test_data))
+
+p <-ggplot() + ggtitle(paste("Proyección")) +
+    geom_point(aes(x=data$Day, y=data$cum, color="casos reales")) + 
+    geom_line(aes(x=test_data$Day, y=test_data$preds, color="modelo")) + 
+    xlab("Fecha") + ylab("Casos acumulados") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+p
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
