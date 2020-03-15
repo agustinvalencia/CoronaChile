@@ -17,11 +17,12 @@ Los resultados siguen un modelo exponencial que no toma en cuenta el período de
 
 Una vez que el factor de crecimiento sea consistente menor que 1, el modelo exponencial dejará de ser una aproximación válida. 
 
+A continuación se presenta primero el modelo más actualizado y a continuación una muestra de los modelos previos constrastados con los datos reales de los días venideros. 
+
 # Datos a la fecha
 
 ```{r}
 data <- read.csv2("corona_data.csv", sep = ",", header = TRUE)
-#data <- read.csv2("sweden.csv", sep = ",", header = TRUE)
 data$Day <- as.Date(data$Day)
 n <- nrow(data)
 data$x <- 1:n
@@ -31,7 +32,8 @@ p <-ggplot() + ggtitle(paste("Evolución de casos al", latest)) +
     geom_line(aes(x=data$Day, y=data$cum)) + 
     geom_point(aes(x=data$Day, y=data$cum)) +
     xlab("Fecha") + ylab("Casos acumulados") + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_x_date(date_breaks = "1 days")
 p
 ```
 
@@ -72,11 +74,83 @@ p <-ggplot() + ggtitle(paste("Proyección")) +
     geom_point(aes(x=data$Day, y=data$cum, color="casos reales")) + 
     geom_line(aes(x=test_data$Day, y=test_data$preds, color="modelo")) + 
     xlab("Fecha") + ylab("Casos acumulados") + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_x_date(date_breaks = "1 days")
 p
 
 summary(model)
 ```
+
+
+# Modelos anteriores
+
+```{r}
+run_model <- function(data, date_split) {
+  train_idxs <- which(data$Day <= date_split)
+  train <- data[train_idxs,]
+  test  <- data[-train_idxs,]
+  model <- lm(formula = log(cum) ~ x, data=train)
+  test$preds <- exp(predict(model, newdata=test))
+  
+  error <- sqrt(mean(test$cum - test$preds)^2)
+  cat("RMS error = ", error, "personas")
+  
+  ggplot() + ggtitle(paste("Modelo al", date_split)) +
+      geom_point(aes(x=data$Day, y=data$cum, color="casos reales")) + 
+      geom_point(aes(x=test$Day, y=test$preds, color="predicción")) + 
+      xlab("Fecha") + ylab("Casos acumulados") + 
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      scale_x_date(date_breaks = "1 days")
+  
+}
+```
+
+
+
+## Modelo del 14-Mar
+```{r}
+run_model(data, "2020-03-14")
+```
+
+
+
+## Modelo del 13-Mar
+```{r}
+run_model(data, "2020-03-13")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
