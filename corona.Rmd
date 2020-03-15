@@ -21,6 +21,8 @@ A continuación se presenta primero el modelo más actualizado y a continuación
 
 # Datos a la fecha
 
+Fuente : https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Chile
+
 ```{r}
 data <- read.csv2("corona_data.csv", sep = ",", header = TRUE)
 data$Day <- as.Date(data$Day)
