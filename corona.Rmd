@@ -108,6 +108,11 @@ run_model <- function(data, date_split) {
 ```
 
 
+## Modelo del 15-Mar
+```{r}
+run_model(data, "2020-03-15")
+```
+
 
 ## Modelo del 14-Mar
 ```{r}
@@ -120,6 +125,7 @@ run_model(data, "2020-03-14")
 ```{r}
 run_model(data, "2020-03-13")
 ```
+
 
 
 
