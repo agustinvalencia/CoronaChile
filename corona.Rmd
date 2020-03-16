@@ -7,6 +7,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(ggplot2)
+library(knitr)
+library(kableExtra)
 ```
 
 # Comentarios a priori
@@ -18,6 +20,8 @@ Los resultados siguen un modelo exponencial que no toma en cuenta el período de
 Una vez que el factor de crecimiento sea consistente menor que 1, el modelo exponencial dejará de ser una aproximación válida. 
 
 A continuación se presenta primero el modelo más actualizado y a continuación una muestra de los modelos previos constrastados con los datos reales de los días venideros. 
+
+---
 
 # Datos a la fecha
 
@@ -62,6 +66,12 @@ ggplot() + ggtitle("Factor de crecimiento") +
 
 # Proyección a 3 días (modelo exponencial simple)
 
+Los resultados del 15 de Marzo fueron inesperadamente altos. Es muestra de que las medidas para el confinamiento del virus no han sido efectivos (o de que las estadísticas anteriores a ese día no son confiables). 
+
+Es necesario observar más días en la serie para poder determinar si el aumento abrupto es una medida ruidosa o efectivamente marca tendencia.
+
+Al momento el modelo proyectado explica $\approx98\%$ de la varianza de los datos. 
+
 ```{r}
 model <- lm(formula = log(cum) ~ x , data=data)
 
@@ -79,10 +89,25 @@ p <-ggplot() + ggtitle(paste("Proyección")) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     scale_x_date(date_breaks = "1 days")
 p
+```
 
+## Casos proyectados para los próximos días.
+
+```{r}
+print_test <- test_data
+print_test$x <- c()
+print_test <- tail(print_test, n=3)
+print_test %>%  kable(digits=0) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
+```
+
+## Estadísticas del modelo
+
+```{r}
 summary(model)
 ```
 
+---
 
 # Modelos anteriores
 
