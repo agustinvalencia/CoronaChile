@@ -64,7 +64,7 @@ ggplot() + ggtitle("Factor de crecimiento") +
 ```
 
 
-# Proyección a 3 días (modelo exponencial simple)
+# Proyección a 1 semana (modelo exponencial simple)
 
 Los resultados del 15 de Marzo fueron inesperadamente altos. Es muestra de que las medidas para el confinamiento del virus no han sido efectivos (o de que las estadísticas anteriores a ese día no son confiables). 
 
@@ -76,8 +76,8 @@ Al momento el modelo proyectado explica $\approx98\%$ de la varianza de los dato
 model <- lm(formula = log(cum) ~ x , data=data)
 
 test_data <- data.frame(
-                Day = seq(data$Day[1], by="day", length.out = (n+3)), 
-                x = 1:(n+3)
+                Day = seq(data$Day[1], by="day", length.out = (n+7)), 
+                x = 1:(n+7)
               )
 
 test_data$preds <- exp(predict(model, newdata=test_data))
@@ -91,12 +91,12 @@ p <-ggplot() + ggtitle(paste("Proyección")) +
 p
 ```
 
-## Casos proyectados para los próximos días.
+## Week forecast
 
 ```{r}
 print_test <- test_data
 print_test$x <- c()
-print_test <- tail(print_test, n=3)
+print_test <- tail(print_test, n=7)
 print_test %>%  kable(digits=0) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
 ```
