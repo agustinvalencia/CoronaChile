@@ -63,21 +63,38 @@ ggplot() + ggtitle("Factor de crecimiento") +
   
 ```
 
+# Proyección a 1 semana (ensembled model)
 
-# Proyección a 3 días (modelo exponencial simple)
+```{r}
+source("./ensemble.R")
+forecast = 7
+results = ensemble_models(data, burndown = 10, forecast = forecast)
+preds = results[,-1:-2]
+majority_knowledge = rowMeans(preds)
+ggplot() + ggtitle("Proyección Ensembled Model") +
+    geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
+    geom_line(aes(x=results$Day, y=majority_knowledge, color="Ensembled Model"))
+print_test = data.frame( Day = results$Day, Prediction = majority_knowledge)
+print_test = print_test[(n+1):nrow(print_test),]
 
-Los resultados del 15 de Marzo fueron inesperadamente altos. Es muestra de que las medidas para el confinamiento del virus no han sido efectivos (o de que las estadísticas anteriores a ese día no son confiables). 
+print_test %>%  kable(digits=0) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
+```
 
-Es necesario observar más días en la serie para poder determinar si el aumento abrupto es una medida ruidosa o efectivamente marca tendencia.
+```{r}
+mse = 1/n * sum((data$cum - majority_knowledge[1:n])^2)
+error = sqrt(mse)
+cat(" El error promedio de las predicciones es =", error, "personas")
+```
 
-Al momento el modelo proyectado explica $\approx98\%$ de la varianza de los datos. 
+# Proyección a 1 semana (modelo exponencial simple)
 
 ```{r}
 model <- lm(formula = log(cum) ~ x , data=data)
 
 test_data <- data.frame(
-                Day = seq(data$Day[1], by="day", length.out = (n+3)), 
-                x = 1:(n+3)
+                Day = seq(data$Day[1], by="day", length.out = (n+7)), 
+                x = 1:(n+7)
               )
 
 test_data$preds <- exp(predict(model, newdata=test_data))
@@ -90,13 +107,18 @@ p <-ggplot() + ggtitle(paste("Proyección")) +
     scale_x_date(date_breaks = "1 days")
 p
 ```
+```{r}
+mse = 1/n * sum((data$cum - test_data$preds[1:n])^2)
+error = sqrt(mse)
+cat(" El error promedio de las predicciones es =", error, "personas")
+```
 
-## Casos proyectados para los próximos días.
+## Week forecast
 
 ```{r}
 print_test <- test_data
 print_test$x <- c()
-print_test <- tail(print_test, n=3)
+print_test <- tail(print_test, n=7)
 print_test %>%  kable(digits=0) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
 ```
@@ -119,9 +141,6 @@ run_model <- function(data, date_split) {
   model <- lm(formula = log(cum) ~ x, data=train)
   test$preds <- exp(predict(model, newdata=test))
   
-  error <- sqrt(mean(test$cum - test$preds)^2)
-  cat("RMS error = ", error, "personas")
-  
   p <-ggplot() + ggtitle(paste("Modelo al", date_split)) +
       geom_point(aes(x=data$Day, y=data$cum, color="casos reales")) + 
       geom_point(aes(x=test$Day, y=test$preds, color="predicción")) + 
@@ -137,6 +156,30 @@ run_model <- function(data, date_split) {
 ```
 
 
+## Modelo al 19-Mar
+```{r}
+run_model(data, "2020-03-19")
+```
+
+
+## Modelo al 18-Mar
+```{r}
+run_model(data, "2020-03-18")
+```
+
+
+## Modelo al 17-Mar
+```{r}
+run_model(data, "2020-03-17")
+```
+
+
+## Modelo al 16-Mar
+```{r}
+run_model(data, "2020-03-16")
+```
+
+
 ## Modelo al 15-Mar
 ```{r}
 run_model(data, "2020-03-15")
@@ -147,7 +190,6 @@ run_model(data, "2020-03-15")
 ```{r}
 run_model(data, "2020-03-14")
 ```
-
 
 
 ## Modelo al 13-Mar
