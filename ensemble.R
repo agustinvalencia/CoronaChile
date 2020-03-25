@@ -1,4 +1,4 @@
-ensemble_models = function(data, burndown, forecast) {
+ensemble_models = function(data, burndown, forecast=0) {
   # training data
   #n = nrow(data)
   #data$Day = as.Date(data$Day)
@@ -7,10 +7,13 @@ ensemble_models = function(data, burndown, forecast) {
   
   # testing structures
   days = data$Day
-  extra_days <- seq(days[n], by="day", length.out = (forecast+1))
-  extra_days <- extra_days[2:length(extra_days)] #first day of extra day is repeated
-  all_preds <- data.frame(
-    Day = c(days, extra_days), 
+  if (forecast != 0) {
+    extra_days <- seq(days[n], by="day", length.out = (forecast+1))
+    extra_days <- extra_days[2:length(extra_days)] #first day of extra day is repeated
+    days = c(days, extra_days)
+  }    
+  all_preds <- data.frame (
+    Day = days, 
     x = 1:(n+forecast)
   )
   preds_names = c()
