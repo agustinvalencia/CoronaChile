@@ -5,10 +5,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+rm(list=ls())
 knitr::opts_chunk$set(echo = FALSE)
 library(ggplot2)
 library(knitr)
 library(kableExtra)
+library(splines)
 ```
 
 # Comentarios a priori
@@ -34,12 +36,28 @@ n <- nrow(data)
 data$x <- 1:n
 data$cum <- cumsum(data$NewCases)
 latest <- data[n,1]
-p <-ggplot() + ggtitle(paste("Evolución de casos al", latest)) +
-    geom_line(aes(x=data$Day, y=data$cum)) + 
-    geom_point(aes(x=data$Day, y=data$cum)) +
-    xlab("Fecha") + ylab("Casos acumulados") + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    scale_x_date(date_breaks = "1 days")
+
+curve = function(x, y, title, label="") {
+  p <-  ggplot() + ggtitle(title) +
+        geom_line (aes(x=x, y=y)) + 
+        geom_point(aes(x=x, y=y)) +
+        xlab("Fecha") + ylab("Casos") + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+        scale_x_date(date_breaks = "1 days") +
+        geom_text(aes(x=x, y=y, label=y),hjust=1,vjust=0)
+  return(p)
+}
+
+
+#p <-ggplot() + ggtitle(paste("Evolución de casos al", latest)) +
+#    geom_line(aes(x=data$Day, y=data$cum)) + 
+#    geom_point(aes(x=data$Day, y=data$cum)) +
+#    xlab("Fecha") + ylab("Casos acumulados") + 
+#    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#    scale_x_date(date_breaks = "1 days") +
+#    geom_text(aes(x=data$Day, y=data$cum, label=data$cum),hjust=1,vjust=0)
+
+p = curve(x=data$Day, y=data$cum, paste("Evolución de casos al", latest))
 p
 ```
 
@@ -61,11 +79,53 @@ ggplot() + ggtitle("Factor de crecimiento") +
   ylim(0,(max(growth_ratio)+0.5)) +
   geom_hline(yintercept = 1, aes(color="y=1"))
   
+
 ```
 
 ---
 
 # Análisis del ajuste de los modelos
+
+A continuación se presentan los modelos desarrollados. Desde el último enfoque hasta el primer enfoque abordado en el tiempo
+
+
+
+```{r}
+### Spline
+
+#X = bs(data$x, knots = 1)
+#spline_fit = lm ( cum ~ X -1 , data = data )
+#preds = predict(spline_fit, newdata=X)
+#ggplot() + ggtitle("Spline model (degrees=3, knots=1)") +
+#    geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
+#    geom_line(aes(x=data$Day, y=preds, color="Spline Model"))+
+#    xlab("Fecha") + ylab("Casos") + 
+#    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#    scale_x_date(date_breaks = "1 days")
+```
+
+
+
+### LOESS
+
+```{r}
+loess_model = loess( cum ~ x, data = data, model = T, 
+                     control = loess.control(surface="direct"))
+preds = predict(loess_model, newdata=data)
+ggplot() + ggtitle("LOESS") +
+    geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
+    geom_line(aes(x=data$Day, y=preds, color="Ensembled Model"))+
+    xlab("Fecha") + ylab("Casos") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_x_date(date_breaks = "1 days")
+
+mse = 1/n * sum((data$cum - preds)^2)
+error = sqrt(mse)
+cat(" El error promedio de las predicciones es =", error, "personas")
+```
+
+
+
 
 ### Ensembled Model
 ```{r}
@@ -76,6 +136,7 @@ majority_knowledge = rowMeans(preds)
 ggplot() + ggtitle("Ajuste Ensembled Model") +
     geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
     geom_line(aes(x=results$Day, y=majority_knowledge, color="Ensembled Model")) +
+    xlab("Fecha") + ylab("Casos") + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     scale_x_date(date_breaks = "1 days")
 
@@ -102,7 +163,7 @@ test_data$preds <- exp(predict(model, newdata=test_data))
 p <-ggplot() + ggtitle(paste("Ajuste Modelo exponencial")) +
     geom_point(aes(x=data$Day, y=data$cum, color="casos reales")) + 
     geom_line(aes(x=test_data$Day, y=test_data$preds, color="modelo")) + 
-    xlab("Fecha") + ylab("Casos acumulados") + 
+    xlab("Fecha") + ylab("Casos") + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     scale_x_date(date_breaks = "1 days")
 p
@@ -116,11 +177,65 @@ cat(" El error promedio de las predicciones es =", error, "personas")
 ---
 
 # Proyecciones a 1 semana
+```{r}
+forecast = 3
+test_data <- data.frame (
+                Day = seq(data$Day[1], by="day", length.out = (n+forecast)), 
+                x = 1:(n+forecast)
+              )
+```
+
+
+```{r}
+### Spline
+
+#X = bs(test_data$x, knots=1)
+#test_data$preds <- predict(spline_fit, newdata=X)
+#
+#ggplot() + ggtitle("Spline model (degrees=2, knots=3)") +
+#    geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
+#    geom_line(aes(x=test_data$Day, y=test_data$preds, color="Spline Model"))+
+#    xlab("Fecha") + ylab("Casos") + 
+#    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#    scale_x_date(date_breaks = "1 days")
+#
+#
+#print_test <- test_data
+#print_test$x <- c()
+#print_test <- tail(print_test, n=forecast)
+#print_test %>%  kable(digits=0) %>%
+#  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
+```
+
+
+
+### LOESS
+
+```{r}
+
+test_data$preds <- c()
+test_data$preds <- predict(loess_model, newdata=test_data$x)
+
+ggplot() + ggtitle("LOESS") +
+    geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
+    geom_line(aes(x=test_data$Day, y=test_data$preds, color="LOESS prediction"))+
+    xlab("Fecha") + ylab("Casos") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_x_date(date_breaks = "1 days")
+
+
+print_test <- test_data
+print_test$x <- c()
+print_test <- tail(print_test, n=forecast)
+print_test %>%  kable(digits=0) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
+```
+
+
 
 ### Ensembled model
 
 ```{r}
-forecast = 7
 results = ensemble_models(data, burndown = 10, forecast = forecast)
 preds = results[,-1:-2]
 majority_knowledge = rowMeans(preds)
@@ -128,6 +243,7 @@ ggplot() + ggtitle("Proyección Ensembled Model") +
     geom_point(aes(x=data$Day, y=data$cum, color="Casos Reales")) + 
     geom_line(aes(x=results$Day, y=majority_knowledge, color="Ensembled Model"))+
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    xlab("Fecha") + ylab("Casos") + 
     scale_x_date(date_breaks = "1 days")
 print_test = data.frame( Day = results$Day, Prediction = majority_knowledge)
 print_test = print_test[(n+1):nrow(print_test),]
@@ -145,8 +261,8 @@ print_test %>%  kable(digits=0) %>%
 model <- lm(formula = log(cum) ~ x , data=data)
 
 test_data <- data.frame(
-                Day = seq(data$Day[1], by="day", length.out = (n+7)), 
-                x = 1:(n+7)
+                Day = seq(data$Day[1], by="day", length.out = (n+forecast)), 
+                x = 1:(n+forecast)
               )
 
 test_data$preds <- exp(predict(model, newdata=test_data))
@@ -154,14 +270,14 @@ test_data$preds <- exp(predict(model, newdata=test_data))
 p <-ggplot() + ggtitle(paste("Proyección")) +
     geom_point(aes(x=data$Day, y=data$cum, color="casos reales")) + 
     geom_line(aes(x=test_data$Day, y=test_data$preds, color="modelo")) + 
-    xlab("Fecha") + ylab("Casos acumulados") + 
+    xlab("Fecha") + ylab("Casos") + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     scale_x_date(date_breaks = "1 days")
 p
 
 print_test <- test_data
 print_test$x <- c()
-print_test <- tail(print_test, n=7)
+print_test <- tail(print_test, n=forecast)
 print_test %>%  kable(digits=0) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE)
 ```
