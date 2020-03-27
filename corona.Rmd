@@ -130,7 +130,7 @@ cat(" El error promedio de las predicciones es =", error, "personas")
 ### Ensembled Model
 ```{r}
 source("./ensemble.R")
-results = ensemble_models(data, burndown = 10)
+results = ensemble_models(data, burndown = (n-7))
 preds = results[,-1:-2]
 majority_knowledge = rowMeans(preds)
 ggplot() + ggtitle("Ajuste Ensembled Model") +
